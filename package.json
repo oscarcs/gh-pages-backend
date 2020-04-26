@@ -1,0 +1,16 @@
+{
+  "name": "gh-pages-backend",
+  "version": "1.0.0",
+  "description": "Github Pages Site backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=api"
+  },
+  "author": "Oscar Sims",
+  "license": "MIT",
+  "dependencies": {
+    "./config.json": "file:./config.json",
+    "@google-cloud/functions-framework": "^1.5.1",
+    "googleapis": "^49.0.0"
+  }
+}
