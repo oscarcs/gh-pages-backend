@@ -27,42 +27,81 @@ exports.api = async (req, res) => {
       }
 }
 
+const listSchema = {
+    Projects: { width: 5 },
+    Writing: { width: 5 }
+}
+const singleSchema = {
+    Projects: { width: 6 },
+    Writing: { width: 6 }
+}
+
 async function handleGet(segments, page, per_page, res) {
-    let range;
-    let sheet;
-
-    switch (segments[0]) {
-        case 'posts':
-            range = {
-                firstRow: page * per_page,
-                lastRow: (page + 1) * per_page - 1,
-                firstColumn: 0,
-                lastColumn: 4
-            };
-            sheet = 'Blog';
-            break;
-        case 'test':
-            range = {
-                firstRow: page * per_page,
-                lastRow: (page + 1) * per_page - 1,
-                firstColumn: 0,
-                lastColumn: 2
-            };
-            sheet = 'Test';
-            break;
-
-        default:
-            return res.send(404);
+    let singleSelect = false;
+    if (segments.length > 1 && segments[1] !== '') {
+        singleSelect = true;
     }
+
     let spreadsheetId = getSpreadsheetId();
     let jwt = getJwt();
 
-    let rows = await retrieveRows(spreadsheetId, jwt, range, sheet);
+    let sheet = handleSheet(segments);
+    let range;
 
+    if (singleSelect) {
+        let row =  await lookupRow(spreadsheetId, jwt, sheet, 0, segments[1]);
+        if (isNaN(row)) {
+            return res.sendStatus(404);
+        }
+        range = handlePagination(sheet, singleSchema, row, 1);
+    }
+    else {
+        range = handlePagination(sheet, listSchema, page, per_page);
+    }
+
+    let rows = [];
+    try {
+        rows = await retrieveRows(spreadsheetId, jwt, sheet, range);
+    }
+    catch (e) {
+        console.log(e);
+        return res.sendStatus(500);
+    }
+
+    if (singleSelect) {
+        return res.send(rows[0]);
+    }
     return res.send(rows);
 }
 
-async function retrieveRows(spreadsheetId, jwt, range, sheet) {
+function handlePost(res) {
+    return res.sendStatus(501);
+}
+
+function handleSheet(segments) {
+    let sheet;
+    switch (segments[0]) {
+        case 'projects':
+            sheet = 'Projects';
+            break;
+
+        case 'writing':
+            sheet = 'Writing';
+            break;
+    }
+    return sheet;
+}
+
+function handlePagination(sheet, schema, page, per_page) {
+    return {
+        firstRow: page * per_page,
+        lastRow: (page + 1) * per_page - 1,
+        firstColumn: 0,
+        lastColumn: schema[sheet].width - 1
+    };
+}
+
+async function retrieveRows(spreadsheetId, jwt, sheet, range) {
     let rangeStr = getRange(range);
     range.firstRow = -1;
     range.lastRow = -1;
@@ -82,10 +121,10 @@ async function retrieveRows(spreadsheetId, jwt, range, sheet) {
     catch (err) {
         console.error(err);
         if (err.code === 403) {
-            return res.status(403).send('The request to the Sheets API failed.');
+            throw new Error('The request to the Sheets API failed.');
         } 
     }
-    
+
     let rows = [];
     let keys = response.valueRanges[0].values[0];
     let values = response.valueRanges[1].values;
@@ -99,8 +138,37 @@ async function retrieveRows(spreadsheetId, jwt, range, sheet) {
     return rows;
 }
 
-function handlePost(res) {
-    return res.sendStatus(501);
+async function lookupRow(spreadsheetId, jwt, sheet, column, needle) {
+    column = column < 26 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[column] : 'Z';
+
+    const request = {
+        spreadsheetId: spreadsheetId,
+        auth: jwt,
+        
+        valueInputOption: "USER_ENTERED",
+        range: "Lookup!A1",
+        includeValuesInResponse: true,
+        resource: {
+            values: [
+                [
+                    `=MATCH("${needle}", ${sheet}!${column}2:${column}, 0)`
+                ]
+            ]
+        }
+    };
+
+    let response = {};
+    try {
+        response = (await sheets.spreadsheets.values.update(request)).data;
+    }
+    catch (err) {
+        console.error(err);
+        if (err.code === 403) {
+            throw new Error('The request to the Sheets API failed.');
+        } 
+    }
+
+    return parseInt(response.updatedData.values[0][0] - 1);
 }
 
 function getSubSegments(segments) {
