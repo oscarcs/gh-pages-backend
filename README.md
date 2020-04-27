@@ -6,7 +6,7 @@ Deploy to GCP like: `gcloud functions deploy api --runtime nodejs10 --trigger-ht
 
 This function requires a `config.json` file set up like this:
 
-```json
+```jsonc
 {
     "spreadsheetId": "",
     "keys": {
