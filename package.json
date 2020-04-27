@@ -9,7 +9,6 @@
   "author": "Oscar Sims",
   "license": "MIT",
   "dependencies": {
-    "./config.json": "file:./config.json",
     "@google-cloud/functions-framework": "^1.5.1",
     "googleapis": "^49.0.0"
   }
