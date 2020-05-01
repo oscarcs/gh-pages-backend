@@ -59,9 +59,9 @@ async function handleGet(segments, page, per_page, res) {
         range = handlePagination(sheet, listSchema, page, per_page);
     }
 
-    let rows = [];
+    let result = { rows: [] };
     try {
-        rows = await retrieveRows(spreadsheetId, jwt, sheet, range);
+        result = await retrieveRows(spreadsheetId, jwt, sheet, range);
     }
     catch (e) {
         console.log(e);
@@ -69,9 +69,9 @@ async function handleGet(segments, page, per_page, res) {
     }
 
     if (singleSelect) {
-        return res.send(rows[0]);
+        return res.send(result.rows[0]);
     }
-    return res.send(rows);
+    return res.send(result);
 }
 
 function handlePost(res) {
@@ -109,7 +109,7 @@ async function retrieveRows(spreadsheetId, jwt, sheet, range) {
 
     const request = {
         spreadsheetId: spreadsheetId,
-        ranges: [`${sheet}!${titles}`, `${sheet}!${rangeStr}`],
+        ranges: [`${sheet}!${titles}`, `${sheet}!${rangeStr}`, `${sheet}Length`],
         dateTimeRenderOption: 'SERIAL_NUMBER',
         auth: jwt
     };
@@ -135,7 +135,12 @@ async function retrieveRows(spreadsheetId, jwt, sheet, range) {
         }
         rows.push(obj);
     }
-    return rows;
+    let length = parseInt(response.valueRanges[2].values[0][0]);
+
+    return {
+        rows: rows,
+        length: length
+    };
 }
 
 async function lookupRow(spreadsheetId, jwt, sheet, column, needle) {
