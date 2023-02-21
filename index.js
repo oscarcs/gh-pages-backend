@@ -188,10 +188,6 @@ function getSpreadsheetId() {
     return require('./config.json').spreadsheetId; 
 }
 
-function getApiKey() {
-    return require('./config.json').keys.incoming; 
-}
-
 function getJwt() {
     let credentials = require('./config.json').keys.outgoing;
     return new google.auth.JWT(

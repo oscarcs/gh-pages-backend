@@ -10,10 +10,13 @@ This function requires a `config.json` file set up like this:
 {
     "spreadsheetId": "",
     "keys": {
-        "incoming": "", // Put your API key here
         "outgoing": { 
             // Put your service account key here
-            // type, project id, private key, etc...
+            // Google Cloud -> IAM & Admin -> Service Accounts.
+            // You can only download it once so be careful!
+            // "type": "...",
+            // "project_id": "..."
+            // etc
         }
     }
 }
