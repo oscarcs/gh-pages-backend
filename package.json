@@ -9,7 +9,7 @@
   "author": "Oscar Sims",
   "license": "MIT",
   "dependencies": {
-    "@google-cloud/functions-framework": "^1.5.1",
+    "@google-cloud/functions-framework": "^3.0.0",
     "googleapis": "^49.0.0"
   }
 }
